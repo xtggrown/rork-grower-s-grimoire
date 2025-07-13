@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { StyleSheet, View, FlatList, Text, Alert } from 'react-native';
+import { StyleSheet, View, FlatList, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 import { useSessionStore } from '@/store/sessionStore';
 import { useSeedStore } from '@/store/seedStore';
 import { SearchBar } from '@/components/SearchBar';
@@ -51,23 +52,11 @@ export default function SessionsScreen() {
   };
 
   const handleSessionPress = (session: Session) => {
-    const strainNames = getStrainNames(session.strains);
-    const sessionDate = new Date(session.date);
-    const topEffects = session.effects
-      .sort((a, b) => b.intensity - a.intensity)
-      .slice(0, 3)
-      .map(e => `${e.name} (${e.intensity}/5)`)
-      .join(', ');
-    
-    Alert.alert(
-      'Session Details',
-      `Date: ${sessionDate.toLocaleDateString()} ${sessionDate.toLocaleTimeString()}\nStrains: ${strainNames.join(', ')}\nMethod: ${session.method}\nDose: ${session.dose}\nDuration: ${session.duration} min\nRating: ${session.rating}/5\n\nTop Effects: ${topEffects}\n\nNotes: ${session.notes || 'No notes'}`,
-      [{ text: 'OK' }]
-    );
+    router.push(`/session/${session.id}`);
   };
 
   const handleAddPress = () => {
-    Alert.alert('Coming Soon', 'Add session form will be implemented next');
+    router.push('/add-session');
   };
 
   return (

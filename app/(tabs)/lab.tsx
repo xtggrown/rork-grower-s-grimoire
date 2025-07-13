@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { StyleSheet, View, FlatList, Text, Alert } from 'react-native';
+import { StyleSheet, View, FlatList, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 import { useLabStore } from '@/store/labStore';
 import { useSeedStore } from '@/store/seedStore';
 import { SearchBar } from '@/components/SearchBar';
@@ -46,18 +47,11 @@ export default function LabScreen() {
   };
 
   const handleCrossPress = (cross: Cross) => {
-    const motherName = getStrainName(cross.mother);
-    const fatherName = getStrainName(cross.father);
-    
-    Alert.alert(
-      cross.name,
-      `Mother: ${motherName}\nFather: ${fatherName}\nStatus: ${cross.status}\nPhenotypes: ${cross.phenotypes.length}\nCreated: ${new Date(cross.date).toLocaleDateString()}\n\nNotes: ${cross.notes || 'No notes'}`,
-      [{ text: 'OK' }]
-    );
+    router.push(`/cross/${cross.id}`);
   };
 
   const handleAddPress = () => {
-    Alert.alert('Coming Soon', 'Add cross form will be implemented next');
+    router.push('/add-cross');
   };
 
   return (

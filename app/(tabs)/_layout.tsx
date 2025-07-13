@@ -1,7 +1,7 @@
 import { Tabs } from "expo-router";
 import React from "react";
 import { StyleSheet } from "react-native";
-import { Leaf, Sprout, Flag, Coffee } from "lucide-react-native";
+import { Leaf, Sprout, Flag, Coffee, BarChart3 } from "lucide-react-native";
 import { colors } from "@/constants/colors";
 
 export default function TabLayout() {
@@ -15,6 +15,13 @@ export default function TabLayout() {
         headerShown: false,
       }}
     >
+      <Tabs.Screen
+        name="dashboard"
+        options={{
+          title: "Dashboard",
+          tabBarIcon: ({ color }) => <BarChart3 size={22} color={color} />,
+        }}
+      />
       <Tabs.Screen
         name="vault"
         options={{

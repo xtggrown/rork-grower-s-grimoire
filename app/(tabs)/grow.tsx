@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { StyleSheet, View, FlatList, Text, Alert } from 'react-native';
+import { StyleSheet, View, FlatList, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 import { useGrowStore } from '@/store/growStore';
 import { SearchBar } from '@/components/SearchBar';
 import { PlantCard } from '@/components/PlantCard';
@@ -43,18 +44,11 @@ export default function GrowScreen() {
   }, [plants, growSpaces, selectedSpaceIndex, searchQuery]);
 
   const handlePlantPress = (plant: Plant) => {
-    const startDate = new Date(plant.startDate);
-    const daysSinceStart = Math.floor((new Date().getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-    
-    Alert.alert(
-      plant.strain,
-      `Breeder: ${plant.breeder}\nStage: ${plant.stage}\nMedium: ${plant.medium}\nDays: ${daysSinceStart}\nPhotos: ${plant.photos.length}\nFeeding entries: ${plant.feedingSchedule.length}`,
-      [{ text: 'OK' }]
-    );
+    router.push(`/plant/${plant.id}`);
   };
 
   const handleAddPress = () => {
-    Alert.alert('Coming Soon', 'Add plant form will be implemented next');
+    router.push('/add-plant');
   };
 
   return (

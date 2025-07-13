@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { StyleSheet, View, FlatList, Text, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 import { useSeedStore } from '@/store/seedStore';
 import { SearchBar } from '@/components/SearchBar';
 import { SeedItem } from '@/components/SeedItem';
@@ -38,19 +39,11 @@ export default function VaultScreen() {
   }, [flowers, searchQuery]);
 
   const handleSeedPress = (seed: Seed) => {
-    Alert.alert(
-      seed.strain,
-      `Breeder: ${seed.breeder}\nLineage: ${seed.lineage}\nCount: ${seed.count} seeds\nAcquired: ${new Date(seed.acquisitionDate).toLocaleDateString()}\n\nNotes: ${seed.notes || 'No notes'}`,
-      [{ text: 'OK' }]
-    );
+    router.push(`/seed/${seed.id}`);
   };
 
   const handleFlowerPress = (flower: Flower) => {
-    Alert.alert(
-      flower.strain,
-      `Jar ID: ${flower.jarId}\nWeight: ${flower.weight}g\nHarvested: ${new Date(flower.harvestDate).toLocaleDateString()}\n\nNotes: ${flower.notes || 'No notes'}`,
-      [{ text: 'OK' }]
-    );
+    router.push(`/flower/${flower.id}`);
   };
 
   const handleAddPress = () => {
@@ -59,8 +52,8 @@ export default function VaultScreen() {
       'Choose what you want to add:',
       [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'Add Seed', onPress: () => Alert.alert('Coming Soon', 'Add seed form will be implemented next') },
-        { text: 'Add Flower', onPress: () => Alert.alert('Coming Soon', 'Add flower form will be implemented next') },
+        { text: 'Add Seed', onPress: () => router.push('/add-seed') },
+        { text: 'Add Flower', onPress: () => router.push('/add-flower') },
       ]
     );
   };
