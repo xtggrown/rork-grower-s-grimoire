@@ -64,6 +64,7 @@ export default function AddPlantScreen() {
       ipmNotes: [],
       timelineEntries: [
         {
+          id: Date.now().toString(),
           date: form.startDate,
           type: 'stage_change',
           title: 'Plant Started',
