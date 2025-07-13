@@ -3,17 +3,18 @@ import { StyleSheet, View, ScrollView, Text, TextInput, TouchableOpacity, Alert 
 import { Stack, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Save, X } from 'lucide-react-native';
-import { useGrowStore } from '@/store/growStore';
+import { usePlantStore } from '@/store/plantStore';
 import { useSeedStore } from '@/store/seedStore';
 import { GrowStage } from '@/types';
 import { colors } from '@/constants/colors';
 
 export default function AddPlantScreen() {
   const insets = useSafeAreaInsets();
-  const { addPlant, growSpaces } = useGrowStore();
+  const { addPlant, growSpaces } = usePlantStore();
   const { seeds } = useSeedStore();
   
   const [form, setForm] = useState({
+    name: '',
     strain: '',
     breeder: '',
     lineage: '',
@@ -25,7 +26,7 @@ export default function AddPlantScreen() {
     seedId: '',
   });
 
-  const stages: GrowStage[] = ['germination', 'seedling', 'vegetative', 'flowering', 'harvest', 'drying', 'curing'];
+  const stages: GrowStage[] = ['germination', 'seedling', 'vegetative', 'pre_flower', 'flowering', 'harvest', 'drying', 'curing'];
 
   const handleSeedSelect = (seedId: string) => {
     const seed = seeds.find(s => s.id === seedId);
@@ -52,6 +53,7 @@ export default function AddPlantScreen() {
     }
 
     addPlant({
+      name: form.name.trim() || undefined,
       strain: form.strain.trim(),
       breeder: form.breeder.trim(),
       lineage: form.lineage.trim(),
@@ -60,11 +62,21 @@ export default function AddPlantScreen() {
       feedingSchedule: [],
       trainingNotes: [],
       ipmNotes: [],
+      timelineEntries: [
+        {
+          date: form.startDate,
+          type: 'stage_change',
+          title: 'Plant Started',
+          description: `Started ${form.strain} in ${form.stage} stage`,
+        },
+      ],
       stage: form.stage,
       startDate: form.startDate,
       photos: [],
       growSpaceId: form.growSpaceId,
       seedId: form.seedId || undefined,
+      isActive: true,
+      environmentalData: [],
     });
     
     Alert.alert('Success', 'Plant added successfully', [
@@ -122,6 +134,17 @@ export default function AddPlantScreen() {
           <Text style={styles.sectionTitle}>Plant Information</Text>
           
           <View style={styles.field}>
+            <Text style={styles.fieldLabel}>Plant Name/ID (Optional)</Text>
+            <TextInput
+              style={styles.input}
+              value={form.name}
+              onChangeText={(text) => setForm(prev => ({ ...prev, name: text }))}
+              placeholder="e.g., BD-01, Plant #1"
+              autoCapitalize="words"
+            />
+          </View>
+
+          <View style={styles.field}>
             <Text style={styles.fieldLabel}>Strain Name *</Text>
             <TextInput
               style={styles.input}
@@ -160,7 +183,7 @@ export default function AddPlantScreen() {
               style={styles.input}
               value={form.medium}
               onChangeText={(text) => setForm(prev => ({ ...prev, medium: text }))}
-              placeholder="e.g., Soil, Coco, Hydro"
+              placeholder="e.g., Soil, Coco/Perlite, Hydro"
               autoCapitalize="words"
             />
           </View>
@@ -192,7 +215,7 @@ export default function AddPlantScreen() {
                     styles.stageOptionText,
                     form.stage === stage && styles.selectedStageOptionText
                   ]}>
-                    {stage}
+                    {stage.replace('_', ' ')}
                   </Text>
                 </TouchableOpacity>
               ))}

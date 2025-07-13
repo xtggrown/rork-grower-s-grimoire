@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { StyleSheet, View, FlatList, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { useGrowStore } from '@/store/growStore';
+import { usePlantStore } from '@/store/plantStore';
 import { SearchBar } from '@/components/SearchBar';
 import { PlantCard } from '@/components/PlantCard';
 import { TabHeader } from '@/components/TabHeader';
@@ -12,7 +12,7 @@ import { colors } from '@/constants/colors';
 
 export default function GrowScreen() {
   const insets = useSafeAreaInsets();
-  const { plants, growSpaces } = useGrowStore();
+  const { plants, growSpaces } = usePlantStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSpaceIndex, setSelectedSpaceIndex] = useState(0);
 
@@ -21,7 +21,7 @@ export default function GrowScreen() {
   }, [growSpaces]);
 
   const filteredPlants = useMemo(() => {
-    let filtered = plants;
+    let filtered = plants.filter(p => p.isActive);
     
     // Filter by grow space if not "All"
     if (selectedSpaceIndex > 0) {
@@ -36,7 +36,8 @@ export default function GrowScreen() {
         (plant) =>
           plant.strain.toLowerCase().includes(query) ||
           plant.breeder.toLowerCase().includes(query) ||
-          plant.stage.toLowerCase().includes(query)
+          plant.stage.toLowerCase().includes(query) ||
+          (plant.name && plant.name.toLowerCase().includes(query))
       );
     }
     

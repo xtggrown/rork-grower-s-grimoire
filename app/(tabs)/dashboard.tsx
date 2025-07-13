@@ -1,8 +1,10 @@
 import React, { useMemo } from 'react';
-import { StyleSheet, View, ScrollView, Text, Dimensions } from 'react-native';
+import { StyleSheet, View, ScrollView, Text, Dimensions, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
+import { Calculator, TrendingUp, Clock, Leaf } from 'lucide-react-native';
 import { useSeedStore } from '@/store/seedStore';
-import { useGrowStore } from '@/store/growStore';
+import { usePlantStore } from '@/store/plantStore';
 import { useSessionStore } from '@/store/sessionStore';
 import { useLabStore } from '@/store/labStore';
 import { TabHeader } from '@/components/TabHeader';
@@ -13,7 +15,7 @@ const { width } = Dimensions.get('window');
 export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
   const { seeds, flowers } = useSeedStore();
-  const { plants } = useGrowStore();
+  const { plants } = usePlantStore();
   const { sessions } = useSessionStore();
   const { crosses } = useLabStore();
 
@@ -22,7 +24,8 @@ export default function DashboardScreen() {
     const totalHarvest = flowers.reduce((sum, flower) => sum + flower.weight, 0);
     
     // Count active plants by stage
-    const plantsByStage = plants.reduce((acc, plant) => {
+    const activePlants = plants.filter(p => p.isActive);
+    const plantsByStage = activePlants.reduce((acc, plant) => {
       acc[plant.stage] = (acc[plant.stage] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
@@ -58,17 +61,59 @@ export default function DashboardScreen() {
       .sort((a, b) => b.avgRating - a.avgRating)
       .slice(0, 3);
 
+    // Calculate average days in each stage
+    const stageAverages = activePlants.reduce((acc, plant) => {
+      const startDate = new Date(plant.startDate);
+      const today = new Date();
+      const daysSinceStart = Math.floor((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+      
+      if (!acc[plant.stage]) {
+        acc[plant.stage] = { total: 0, count: 0 };
+      }
+      acc[plant.stage].total += daysSinceStart;
+      acc[plant.stage].count += 1;
+      return acc;
+    }, {} as Record<string, { total: number; count: number }>);
+
     return {
       totalSeeds: seeds.length,
       totalFlowers: flowers.length,
       totalHarvest: totalHarvest.toFixed(1),
-      activePlants: plants.length,
+      activePlants: activePlants.length,
       plantsByStage,
       totalCrosses: crosses.length,
       recentSessions: recentSessions.length,
       topStrains,
+      stageAverages,
     };
   }, [seeds, flowers, plants, sessions, crosses]);
+
+  const quickActions = [
+    {
+      title: 'Calculators',
+      icon: Calculator,
+      color: colors.primary,
+      onPress: () => router.push('/calculators'),
+    },
+    {
+      title: 'Analytics',
+      icon: TrendingUp,
+      color: colors.secondary,
+      onPress: () => router.push('/analytics'),
+    },
+    {
+      title: 'Timeline',
+      icon: Clock,
+      color: colors.warning,
+      onPress: () => router.push('/(tabs)/grow'),
+    },
+    {
+      title: 'Add Plant',
+      icon: Leaf,
+      color: colors.success,
+      onPress: () => router.push('/add-plant'),
+    },
+  ];
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -95,14 +140,47 @@ export default function DashboardScreen() {
           </View>
         </View>
 
+        {/* Quick Actions */}
+        <View style={styles.sectionContainer}>
+          <Text style={styles.sectionTitle}>Quick Actions</Text>
+          <View style={styles.actionsGrid}>
+            {quickActions.map((action, index) => (
+              <TouchableOpacity
+                key={index}
+                style={styles.actionCard}
+                onPress={action.onPress}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.actionIcon, { backgroundColor: action.color }]}>
+                  <action.icon size={24} color="white" />
+                </View>
+                <Text style={styles.actionTitle}>{action.title}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
         {/* Plants by Stage */}
         <View style={styles.sectionContainer}>
           <Text style={styles.sectionTitle}>Plants by Stage</Text>
           <View style={styles.stageContainer}>
             {Object.entries(stats.plantsByStage).map(([stage, count]) => (
               <View key={stage} style={styles.stageItem}>
-                <Text style={styles.stageCount}>{count}</Text>
-                <Text style={styles.stageLabel}>{stage}</Text>
+                <View style={styles.stageInfo}>
+                  <Text style={styles.stageName}>{stage}</Text>
+                  <Text style={styles.stageCount}>{count} plants</Text>
+                </View>
+                <View style={styles.stageProgress}>
+                  <View 
+                    style={[
+                      styles.stageProgressBar, 
+                      { 
+                        width: `${(count / stats.activePlants) * 100}%`,
+                        backgroundColor: colors.primary,
+                      }
+                    ]} 
+                  />
+                </View>
               </View>
             ))}
             {Object.keys(stats.plantsByStage).length === 0 && (
@@ -122,6 +200,10 @@ export default function DashboardScreen() {
             <View style={styles.activityItem}>
               <Text style={styles.activityNumber}>{stats.totalCrosses}</Text>
               <Text style={styles.activityLabel}>Total Crosses</Text>
+            </View>
+            <View style={styles.activityItem}>
+              <Text style={styles.activityNumber}>{flowers.length}</Text>
+              <Text style={styles.activityLabel}>Harvests</Text>
             </View>
           </View>
         </View>
@@ -147,6 +229,31 @@ export default function DashboardScreen() {
           ) : (
             <Text style={styles.emptyText}>No session data available</Text>
           )}
+        </View>
+
+        {/* Growth Insights */}
+        <View style={styles.sectionContainer}>
+          <Text style={styles.sectionTitle}>Growth Insights</Text>
+          <View style={styles.insightsContainer}>
+            <View style={styles.insightCard}>
+              <Text style={styles.insightTitle}>Average Grow Time</Text>
+              <Text style={styles.insightValue}>
+                {stats.activePlants > 0 
+                  ? Math.round(Object.values(stats.stageAverages).reduce((sum, stage) => sum + (stage.total / stage.count), 0) / Object.keys(stats.stageAverages).length)
+                  : 0
+                } days
+              </Text>
+            </View>
+            <View style={styles.insightCard}>
+              <Text style={styles.insightTitle}>Success Rate</Text>
+              <Text style={styles.insightValue}>
+                {plants.length > 0 
+                  ? Math.round((flowers.length / plants.length) * 100)
+                  : 0
+                }%
+              </Text>
+            </View>
+          </View>
         </View>
       </ScrollView>
     </View>
@@ -201,28 +308,71 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginBottom: 12,
   },
+  actionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  actionCard: {
+    flex: 1,
+    minWidth: (width - 48) / 2 - 6,
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  actionIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  actionTitle: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.text,
+    textAlign: 'center',
+  },
   stageContainer: {
     backgroundColor: colors.card,
     borderRadius: 12,
     padding: 16,
   },
   stageItem: {
+    marginBottom: 16,
+  },
+  stageInfo: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    marginBottom: 8,
   },
-  stageCount: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.primary,
-  },
-  stageLabel: {
+  stageName: {
     fontSize: 14,
+    fontWeight: '500',
     color: colors.text,
     textTransform: 'capitalize',
+  },
+  stageCount: {
+    fontSize: 12,
+    color: colors.textLight,
+  },
+  stageProgress: {
+    height: 4,
+    backgroundColor: colors.border,
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  stageProgressBar: {
+    height: '100%',
+    borderRadius: 2,
   },
   activityContainer: {
     flexDirection: 'row',
@@ -289,6 +439,28 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: colors.secondaryDark,
+  },
+  insightsContainer: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  insightCard: {
+    flex: 1,
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+  },
+  insightTitle: {
+    fontSize: 12,
+    color: colors.textLight,
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  insightValue: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.primary,
   },
   emptyText: {
     fontSize: 14,
