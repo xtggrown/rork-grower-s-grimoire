@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { StyleSheet, View, FlatList, Text } from 'react-native';
+import { StyleSheet, View, FlatList, Text, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSessionStore } from '@/store/sessionStore';
 import { useSeedStore } from '@/store/seedStore';
@@ -51,13 +51,23 @@ export default function SessionsScreen() {
   };
 
   const handleSessionPress = (session: Session) => {
-    // Navigate to session detail
-    console.log('Session pressed:', session);
+    const strainNames = getStrainNames(session.strains);
+    const sessionDate = new Date(session.date);
+    const topEffects = session.effects
+      .sort((a, b) => b.intensity - a.intensity)
+      .slice(0, 3)
+      .map(e => `${e.name} (${e.intensity}/5)`)
+      .join(', ');
+    
+    Alert.alert(
+      'Session Details',
+      `Date: ${sessionDate.toLocaleDateString()} ${sessionDate.toLocaleTimeString()}\nStrains: ${strainNames.join(', ')}\nMethod: ${session.method}\nDose: ${session.dose}\nDuration: ${session.duration} min\nRating: ${session.rating}/5\n\nTop Effects: ${topEffects}\n\nNotes: ${session.notes || 'No notes'}`,
+      [{ text: 'OK' }]
+    );
   };
 
   const handleAddPress = () => {
-    // Navigate to add session form
-    console.log('Add pressed');
+    Alert.alert('Coming Soon', 'Add session form will be implemented next');
   };
 
   return (
@@ -80,9 +90,11 @@ export default function SessionsScreen() {
           />
         )}
         contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>No sessions found</Text>
+            <Text style={styles.emptySubtext}>Tap the + button to log your first session</Text>
           </View>
         }
       />
@@ -102,10 +114,18 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: 40,
+    paddingTop: 60,
+    paddingHorizontal: 40,
   },
   emptyText: {
-    fontSize: 16,
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 8,
+  },
+  emptySubtext: {
+    fontSize: 14,
     color: colors.textLight,
+    textAlign: 'center',
   },
 });

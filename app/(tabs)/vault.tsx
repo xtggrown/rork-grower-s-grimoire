@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { StyleSheet, View, FlatList, Text, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, FlatList, Text, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSeedStore } from '@/store/seedStore';
 import { SearchBar } from '@/components/SearchBar';
@@ -38,18 +38,31 @@ export default function VaultScreen() {
   }, [flowers, searchQuery]);
 
   const handleSeedPress = (seed: Seed) => {
-    // Navigate to seed detail
-    console.log('Seed pressed:', seed);
+    Alert.alert(
+      seed.strain,
+      `Breeder: ${seed.breeder}\nLineage: ${seed.lineage}\nCount: ${seed.count} seeds\nAcquired: ${new Date(seed.acquisitionDate).toLocaleDateString()}\n\nNotes: ${seed.notes || 'No notes'}`,
+      [{ text: 'OK' }]
+    );
   };
 
   const handleFlowerPress = (flower: Flower) => {
-    // Navigate to flower detail
-    console.log('Flower pressed:', flower);
+    Alert.alert(
+      flower.strain,
+      `Jar ID: ${flower.jarId}\nWeight: ${flower.weight}g\nHarvested: ${new Date(flower.harvestDate).toLocaleDateString()}\n\nNotes: ${flower.notes || 'No notes'}`,
+      [{ text: 'OK' }]
+    );
   };
 
   const handleAddPress = () => {
-    // Navigate to add seed/flower form
-    console.log('Add pressed');
+    Alert.alert(
+      'Add New Item',
+      'Choose what you want to add:',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Add Seed', onPress: () => Alert.alert('Coming Soon', 'Add seed form will be implemented next') },
+        { text: 'Add Flower', onPress: () => Alert.alert('Coming Soon', 'Add flower form will be implemented next') },
+      ]
+    );
   };
 
   return (
@@ -73,9 +86,11 @@ export default function VaultScreen() {
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => <SeedItem seed={item} onPress={handleSeedPress} />}
           contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyText}>No seeds found</Text>
+              <Text style={styles.emptySubtext}>Tap the + button to add your first seed</Text>
             </View>
           }
         />
@@ -85,9 +100,11 @@ export default function VaultScreen() {
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => <FlowerItem flower={item} onPress={handleFlowerPress} />}
           contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyText}>No flowers found</Text>
+              <Text style={styles.emptySubtext}>Tap the + button to add your first harvest</Text>
             </View>
           }
         />
@@ -108,10 +125,18 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: 40,
+    paddingTop: 60,
+    paddingHorizontal: 40,
   },
   emptyText: {
-    fontSize: 16,
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 8,
+  },
+  emptySubtext: {
+    fontSize: 14,
     color: colors.textLight,
+    textAlign: 'center',
   },
 });

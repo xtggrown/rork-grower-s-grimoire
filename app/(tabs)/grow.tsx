@@ -1,12 +1,12 @@
 import React, { useState, useMemo } from 'react';
-import { StyleSheet, View, FlatList, Text, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, FlatList, Text, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useGrowStore } from '@/store/growStore';
 import { SearchBar } from '@/components/SearchBar';
 import { PlantCard } from '@/components/PlantCard';
 import { TabHeader } from '@/components/TabHeader';
 import { SegmentedControl } from '@/components/SegmentedControl';
-import { Plant, GrowSpace } from '@/types';
+import { Plant } from '@/types';
 import { colors } from '@/constants/colors';
 
 export default function GrowScreen() {
@@ -43,13 +43,18 @@ export default function GrowScreen() {
   }, [plants, growSpaces, selectedSpaceIndex, searchQuery]);
 
   const handlePlantPress = (plant: Plant) => {
-    // Navigate to plant detail
-    console.log('Plant pressed:', plant);
+    const startDate = new Date(plant.startDate);
+    const daysSinceStart = Math.floor((new Date().getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+    
+    Alert.alert(
+      plant.strain,
+      `Breeder: ${plant.breeder}\nStage: ${plant.stage}\nMedium: ${plant.medium}\nDays: ${daysSinceStart}\nPhotos: ${plant.photos.length}\nFeeding entries: ${plant.feedingSchedule.length}`,
+      [{ text: 'OK' }]
+    );
   };
 
   const handleAddPress = () => {
-    // Navigate to add plant form
-    console.log('Add pressed');
+    Alert.alert('Coming Soon', 'Add plant form will be implemented next');
   };
 
   return (
@@ -74,9 +79,11 @@ export default function GrowScreen() {
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => <PlantCard plant={item} onPress={handlePlantPress} />}
         contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>No plants found</Text>
+            <Text style={styles.emptySubtext}>Tap the + button to start your first grow</Text>
           </View>
         }
       />
@@ -96,10 +103,18 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: 40,
+    paddingTop: 60,
+    paddingHorizontal: 40,
   },
   emptyText: {
-    fontSize: 16,
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 8,
+  },
+  emptySubtext: {
+    fontSize: 14,
     color: colors.textLight,
+    textAlign: 'center',
   },
 });

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { StyleSheet, View, FlatList, Text } from 'react-native';
+import { StyleSheet, View, FlatList, Text, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLabStore } from '@/store/labStore';
 import { useSeedStore } from '@/store/seedStore';
@@ -46,13 +46,18 @@ export default function LabScreen() {
   };
 
   const handleCrossPress = (cross: Cross) => {
-    // Navigate to cross detail
-    console.log('Cross pressed:', cross);
+    const motherName = getStrainName(cross.mother);
+    const fatherName = getStrainName(cross.father);
+    
+    Alert.alert(
+      cross.name,
+      `Mother: ${motherName}\nFather: ${fatherName}\nStatus: ${cross.status}\nPhenotypes: ${cross.phenotypes.length}\nCreated: ${new Date(cross.date).toLocaleDateString()}\n\nNotes: ${cross.notes || 'No notes'}`,
+      [{ text: 'OK' }]
+    );
   };
 
   const handleAddPress = () => {
-    // Navigate to add cross form
-    console.log('Add pressed');
+    Alert.alert('Coming Soon', 'Add cross form will be implemented next');
   };
 
   return (
@@ -82,9 +87,11 @@ export default function LabScreen() {
           />
         )}
         contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>No crosses found</Text>
+            <Text style={styles.emptySubtext}>Tap the + button to create your first cross</Text>
           </View>
         }
       />
@@ -104,10 +111,18 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: 40,
+    paddingTop: 60,
+    paddingHorizontal: 40,
   },
   emptyText: {
-    fontSize: 16,
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 8,
+  },
+  emptySubtext: {
+    fontSize: 14,
     color: colors.textLight,
+    textAlign: 'center',
   },
 });
